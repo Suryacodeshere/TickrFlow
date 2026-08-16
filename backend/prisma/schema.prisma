@@ -35,15 +35,16 @@ model User {
 }
 
 model Event {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   title       String
   description String
   date        DateTime
   location    String
   totalSeats  Int
   seats       Seat[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  bookings    Booking[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Seat {
@@ -66,6 +67,7 @@ model Booking {
   userId      Int
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   eventId     Int
+  event       Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
   totalAmount Float
   status      BookingStatus @default(PENDING)
   qrCode      String?       // Base64 QR code image string

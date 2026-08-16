@@ -19,7 +19,16 @@ export async function connectRedis() {
 
   try {
     redisClient = createClient({
-      url: REDIS_URL
+      url: REDIS_URL,
+      socket: {
+        reconnectStrategy: (retries) => {
+          if (retries > 1) {
+            // Stop retrying after 2 attempts to fallback to in-memory lock manager
+            return new Error('Redis connection failed');
+          }
+          return 500; // wait 500ms before retrying
+        }
+      }
     });
 
     redisClient.on('error', (err) => {
