@@ -108,20 +108,18 @@ export async function googleLogin(req, res) {
 
     if (GOOGLE_CLIENT_ID && !isMock) {
       if (!token) {
-        return res.status(400).json({ error: 'Google ID token is required' });
+        return res.status(400).json({ error: 'Google access token is required' });
       }
 
-      // Verify Google ID token using Google TokenInfo endpoint (built-in, zero dependencies)
-      const verifyUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`;
-      const verifyRes = await fetch(verifyUrl);
+      // Verify Google Access Token using Google's userinfo endpoint
+      const verifyUrl = 'https://www.googleapis.com/oauth2/v3/userinfo';
+      const verifyRes = await fetch(verifyUrl, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const payload = await verifyRes.json();
 
       if (!verifyRes.ok) {
-        return res.status(400).json({ error: 'Failed to verify Google ID token' });
-      }
-
-      if (payload.aud !== GOOGLE_CLIENT_ID) {
-        return res.status(400).json({ error: 'Google ID token client audience mismatch' });
+        return res.status(400).json({ error: 'Failed to verify Google authentication access token' });
       }
 
       userEmail = payload.email;

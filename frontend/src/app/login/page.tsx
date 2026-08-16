@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Ticket, Mail, Lock, User, ShieldCheck, X } from 'lucide-react';
+import Script from 'next/script';
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -48,7 +49,26 @@ export default function LoginPage() {
   };
 
   const handleGoogleSignInClick = () => {
-    setShowGoogleMock(true);
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (clientId && (window as any).google) {
+      try {
+        const client = (window as any).google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: 'openid email profile',
+          callback: async (tokenResponse: any) => {
+            if (tokenResponse && tokenResponse.access_token) {
+              await handleGoogleLogin('', '', tokenResponse.access_token, false);
+            }
+          },
+        });
+        client.requestAccessToken();
+      } catch (err) {
+        console.error('Google Sign-In initialization failed:', err);
+        setShowGoogleMock(true);
+      }
+    } else {
+      setShowGoogleMock(true);
+    }
   };
 
   // Redirect if already logged in
@@ -403,6 +423,7 @@ export default function LoginPage() {
           </div>
         )}
       </div>
+      <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
     </div>
   );
 }
