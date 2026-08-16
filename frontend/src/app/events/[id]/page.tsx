@@ -73,15 +73,23 @@ export default function EventBookingPage() {
 
   useEffect(() => {
     fetchEventDetails();
-    joinEvent(String(id));
 
     return () => {
-      leaveEvent(String(id));
       // Release locks if page is closed
       handleReleaseLocksDirect();
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [id]);
+
+  // Join room when socket becomes available
+  useEffect(() => {
+    if (socket) {
+      joinEvent(String(id));
+      return () => {
+        leaveEvent(String(id));
+      };
+    }
+  }, [socket, id]);
 
   // Direct cleanup helper for page closes / triggers
   const handleReleaseLocksDirect = async () => {
