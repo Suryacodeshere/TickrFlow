@@ -240,9 +240,8 @@ export default function LandingPage() {
         </section>
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-white/5 bg-slate-950 py-8 text-center text-xs sm:text-sm text-slate-500">
-        <p>&copy; {new Date().getFullYear()} TickrFlow. Powered by Next.js, Express, PostgreSQL, Upstash Redis & Socket.IO.</p>
+        <p>&copy; {new Date().getFullYear()} TickrFlow. All rights reserved.</p>
       </footer>
 
       {/* Tickets Drawer / Modal */}

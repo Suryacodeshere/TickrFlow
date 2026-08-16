@@ -519,9 +519,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Footer */}
       <footer className="border-t border-white/5 bg-slate-950 py-8 text-center text-xs text-slate-500 mt-12">
-        <p>&copy; {new Date().getFullYear()} TickrFlow. Organizer Dashboard console.</p>
+        <p>&copy; {new Date().getFullYear()} TickrFlow. All rights reserved.</p>
       </footer>
     </div>
   );
