@@ -97,3 +97,81 @@ export async function login(req, res) {
     res.status(500).json({ error: 'Internal server error during login' });
   }
 }
+
+export async function googleLogin(req, res) {
+  try {
+    const { token, email, name, isMock } = req.body;
+    let userEmail = email;
+    let userName = name;
+
+    const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+
+    if (GOOGLE_CLIENT_ID && !isMock) {
+      if (!token) {
+        return res.status(400).json({ error: 'Google ID token is required' });
+      }
+
+      // Verify Google ID token using Google TokenInfo endpoint (built-in, zero dependencies)
+      const verifyUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`;
+      const verifyRes = await fetch(verifyUrl);
+      const payload = await verifyRes.json();
+
+      if (!verifyRes.ok) {
+        return res.status(400).json({ error: 'Failed to verify Google ID token' });
+      }
+
+      if (payload.aud !== GOOGLE_CLIENT_ID) {
+        return res.status(400).json({ error: 'Google ID token client audience mismatch' });
+      }
+
+      userEmail = payload.email;
+      userName = payload.name;
+    } else {
+      // Mock Login Mode
+      if (!userEmail) {
+        return res.status(400).json({ error: 'Email is required for mock Google login' });
+      }
+    }
+
+    // Find or create user
+    let user = await prisma.user.findUnique({
+      where: { email: userEmail }
+    });
+
+    if (!user) {
+      // Generate dummy password for external auth accounts
+      const dummyRawPassword = Math.random().toString(36).slice(-8) + Date.now().toString();
+      const hashedPassword = await bcrypt.hash(dummyRawPassword, 10);
+
+      user = await prisma.user.create({
+        data: {
+          email: userEmail,
+          name: userName || userEmail.split('@')[0],
+          password: hashedPassword,
+          role: 'ATTENDEE'
+        }
+      });
+      console.log(`👤 Registered new Google user: ${userEmail}`);
+    }
+
+    // Generate JWT token
+    const jwtToken = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      token: jwtToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('Google login controller error:', error);
+    res.status(500).json({ error: 'Failed to complete Google authentication' });
+  }
+}
