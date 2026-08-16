@@ -14,10 +14,16 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
+// Allowed origins for CORS
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:3000',
+].filter(Boolean);
+
 // Initialize Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: '*', // In production, replace with specific origins for security
+    origin: allowedOrigins,
     methods: ['GET', 'POST']
   }
 });
@@ -26,7 +32,7 @@ const io = new Server(server, {
 app.set('socketio', io);
 
 // Global Middlewares
-app.use(cors());
+app.use(cors({ origin: allowedOrigins }));
 
 // IMPORTANT: Razorpay webhook requires the raw body to verify signature.
 // We must place this route BEFORE applying express.json() globally.
