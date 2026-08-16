@@ -1,0 +1,96 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ORGANIZER
+  ATTENDEE
+}
+
+enum SeatStatus {
+  AVAILABLE
+  BOOKED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String
+  name      String
+  role      Role      @default(ATTENDEE)
+  bookings  Booking[]
+  createdAt DateTime  @default(now())
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  date        DateTime
+  location    String
+  totalSeats  Int
+  seats       Seat[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Seat {
+  id        Int           @id @default(autoincrement())
+  row       String
+  number    Int
+  category  String        // e.g. "VIP", "Balcony", "General"
+  price     Float
+  status    SeatStatus    @default(AVAILABLE)
+  eventId   Int
+  event     Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  bookings  BookingSeat[]
+  
+  @@unique([eventId, row, number])
+}
+
+model Booking {
+  id          Int           @id @default(autoincrement())
+  bookingRef  String        @unique
+  userId      Int
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId     Int
+  totalAmount Float
+  status      BookingStatus @default(PENDING)
+  qrCode      String?       // Base64 QR code image string
+  seats       BookingSeat[]
+  payment     Payment?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model BookingSeat {
+  bookingId Int
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  seatId    Int
+  seat      Seat    @relation(fields: [seatId], references: [id], onDelete: Cascade)
+
+  @@id([bookingId, seatId])
+}
+
+model Payment {
+  id                Int      @id @default(autoincrement())
+  bookingId         Int      @unique
+  booking           Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  razorpayOrderId   String   @unique
+  razorpayPaymentId String?
+  razorpaySignature String?
+  amount            Float
+  status            String   // "PENDING", "SUCCESS", "FAILED"
+  createdAt         DateTime @default(now())
+}
