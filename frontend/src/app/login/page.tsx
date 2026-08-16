@@ -199,6 +199,35 @@ export default function LoginPage() {
             {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
           </button>
         </div>
+
+        {/* Quick Demo Login Credentials */}
+        <div className="mt-8 pt-6 border-t border-white/5 space-y-3">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider text-center">Demo Accounts</p>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('attendee@tickrflow.com');
+                setPassword('password123');
+                setIsLogin(true);
+              }}
+              className="py-2.5 px-3 rounded-xl border border-white/5 bg-slate-900/40 text-slate-300 hover:bg-slate-900 hover:text-white hover:border-indigo-500/20 text-center transition-all cursor-pointer font-medium"
+            >
+              Attendee Login
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('organizer@tickrflow.com');
+                setPassword('password123');
+                setIsLogin(true);
+              }}
+              className="py-2.5 px-3 rounded-xl border border-white/5 bg-slate-900/40 text-slate-300 hover:bg-slate-900 hover:text-white hover:border-indigo-500/20 text-center transition-all cursor-pointer font-medium"
+            >
+              Organizer Login
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
