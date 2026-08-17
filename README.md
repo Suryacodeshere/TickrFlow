@@ -2,6 +2,24 @@
 
 🔗 **Live Demo:** [TickrFlow](https://frontend-20yao675b-suryas-projects-b65a9565.vercel.app)  
 
+---
+
+## About the Project ℹ️
+
+### The Problem 🚨
+During high-demand ticket sales (such as popular concerts or sporting events), thousands of users attempt to purchase the exact same seat layout simultaneously. Without concurrency controls, this results in:
+- **Double Bookings**: Multiple users successfully paying for and receiving the same seat ticket.
+- **Database Deadlocks**: Massive write collisions on the database layer causing request timeouts or crashes.
+- **Frustrated Users**: Selecting seats, filling in details, only to have the transaction fail at the very end of the checkout process.
+
+### The Solution 🛡️
+TickrFlow handles high concurrency using a two-stage distributed lock and synchronization flow:
+1. **Atomic Memory Locks (Upstash Redis)**: When User A selects a seat, the backend sets a temporary, atomic lock in Redis (`SET key NX EX 300`). Because this is an atomic operation, it guarantees that only one request can hold the lock. If User B attempts to reserve the same seat, they are instantly rejected at the memory layer before hitting the primary database.
+2. **Real-time Live Sync (Socket.IO)**: Once User A holds the seat, a WebSocket message is broadcast to all active users looking at the same map, instantly turning User A's selected seat yellow (disabled) on their screens.
+3. **Automatic Release (TTL)**: The Redis key is configured with a 300-second (5-minute) expiration time. If User A successfully pays via Razorpay, the ticket is permanently written to PostgreSQL. If User A abandons the page or fails to pay, the TTL expires, the lock is auto-deleted, and the seat instantly becomes available for other buyers.
+
+---
+
 ## Features
 
 ### 1. 🔒 Secure Authentication
@@ -41,22 +59,6 @@
 | **Caching/Locking**| Upstash Redis | Remote memory cache for distributed, atomic seat locks with TTL expiration |
 | **Payments** | Razorpay SDK | Secure, test-mode payment gateway integration |
 | **Auth** | Google Identity Services, JWT | Dual-mode login allowing Google SSO or self-built JWT credentials |
-
----
-
-## About the Project ℹ️
-
-### The Problem 🚨
-During high-demand ticket sales (such as popular concerts or sporting events), thousands of users attempt to purchase the exact same seat layout simultaneously. Without concurrency controls, this results in:
-- **Double Bookings**: Multiple users successfully paying for and receiving the same seat ticket.
-- **Database Deadlocks**: Massive write collisions on the database layer causing request timeouts or crashes.
-- **Frustrated Users**: Selecting seats, filling in details, only to have the transaction fail at the very end of the checkout process.
-
-### The Solution 🛡️
-TickrFlow handles high concurrency using a two-stage distributed lock and synchronization flow:
-1. **Atomic Memory Locks (Upstash Redis)**: When User A selects a seat, the backend sets a temporary, atomic lock in Redis (`SET key NX EX 300`). Because this is an atomic operation, it guarantees that only one request can hold the lock. If User B attempts to reserve the same seat, they are instantly rejected at the memory layer before hitting the primary database.
-2. **Real-time Live Sync (Socket.IO)**: Once User A holds the seat, a WebSocket message is broadcast to all active users looking at the same map, instantly turning User A's selected seat yellow (disabled) on their screens.
-3. **Automatic Release (TTL)**: The Redis key is configured with a 300-second (5-minute) expiration time. If User A successfully pays via Razorpay, the ticket is permanently written to PostgreSQL. If User A abandons the page or fails to pay, the TTL expires, the lock is auto-deleted, and the seat instantly becomes available for other buyers.
 
 ---
 
