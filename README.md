@@ -1,7 +1,6 @@
 # TickrFlow 🎫
 
 🔗 **Live Demo:** [TickrFlow](https://frontend-20yao675b-suryas-projects-b65a9565.vercel.app)  
-🔌 **Live Backend:** [TickrFlow API](https://tickrflow.onrender.com)
 
 ## Features
 
