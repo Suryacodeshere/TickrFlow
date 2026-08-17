@@ -44,42 +44,19 @@
 
 ---
 
-## System Architecture
+## About the Project ℹ️
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Attendee as User A (Tab 1)
-    actor Browser2 as User B (Tab 2)
-    participant API as Express API
-    participant Redis as Upstash Redis
-    participant DB as Supabase PostgreSQL
-    participant WS as Socket.IO Server
+### The Problem 🚨
+During high-demand ticket sales (such as popular concerts or sporting events), thousands of users attempt to purchase the exact same seat layout simultaneously. Without concurrency controls, this results in:
+- **Double Bookings**: Multiple users successfully paying for and receiving the same seat ticket.
+- **Database Deadlocks**: Massive write collisions on the database layer causing request timeouts or crashes.
+- **Frustrated Users**: Selecting seats, filling in details, only to have the transaction fail at the very end of the checkout process.
 
-    Attendee->>API: Selects seat A7 & click "Reserve"
-    API->>Redis: Set Key "lock:event:1:seat:A7" NX EX 300
-    alt Lock Acquired (Successful)
-        Redis-->>API: OK (Lock acquired)
-        API->>WS: Broadcast "seats:locked" (A7, User A)
-        WS-->>Browser2: Live update: Seat A7 turns yellow (Locked)
-        API-->>Attendee: Return 5-minute reservation timer
-    else Lock Failed (Seat already reserved)
-        Redis-->>API: Null
-        API-->>Attendee: Return 409 Conflict ("Seat already held")
-    end
-
-    alt Payment Success (Within 5 minutes)
-        Attendee->>API: Process Razorpay Checkout
-        API->>DB: Create Booking & mark Seat A7 as BOOKED
-        API->>Redis: Delete Key "lock:event:1:seat:A7"
-        API->>WS: Broadcast "seats:booked" (A7)
-        WS-->>Browser2: Live update: Seat A7 turns red (Booked)
-    else Expiration (Timer hits 0)
-        Redis--xAPI: TTL expires (300s)
-        API->>WS: Broadcast "seats:unlocked" (A7)
-        WS-->>Browser2: Live update: Seat A7 turns grey (Available)
-    end
-```
+### The Solution 🛡️
+TickrFlow handles high concurrency using a two-stage distributed lock and synchronization flow:
+1. **Atomic Memory Locks (Upstash Redis)**: When User A selects a seat, the backend sets a temporary, atomic lock in Redis (`SET key NX EX 300`). Because this is an atomic operation, it guarantees that only one request can hold the lock. If User B attempts to reserve the same seat, they are instantly rejected at the memory layer before hitting the primary database.
+2. **Real-time Live Sync (Socket.IO)**: Once User A holds the seat, a WebSocket message is broadcast to all active users looking at the same map, instantly turning User A's selected seat yellow (disabled) on their screens.
+3. **Automatic Release (TTL)**: The Redis key is configured with a 300-second (5-minute) expiration time. If User A successfully pays via Razorpay, the ticket is permanently written to PostgreSQL. If User A abandons the page or fails to pay, the TTL expires, the lock is auto-deleted, and the seat instantly becomes available for other buyers.
 
 ---
 
