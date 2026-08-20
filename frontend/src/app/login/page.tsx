@@ -40,10 +40,15 @@ export default function LoginPage() {
       }
       localStorage.setItem('tf_token', data.token);
       localStorage.setItem('tf_user', JSON.stringify(data.user));
-      // Force reload to trigger global app layout AuthProvider reload
-      window.location.reload();
+      // Navigate based on role without reload to avoid race condition
+      if (data.user.role === 'ORGANIZER') {
+        router.push('/dashboard');
+      } else {
+        router.push('/');
+      }
     } catch (err: any) {
-      setError(err.message || 'Google Login failed');
+      console.error('Google login error:', err);
+      setError(err.message || 'Google Login failed. Please try again.');
       setSubmitting(false);
     }
   };
