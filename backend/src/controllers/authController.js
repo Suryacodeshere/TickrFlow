@@ -1,8 +1,10 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../config/db.js';
+import { OAuth2Client } from 'google-auth-library';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'tickrflow-secret-jwt-token-key';
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export async function signup(req, res) {
   try {
@@ -108,18 +110,18 @@ export async function googleLogin(req, res) {
 
     if (GOOGLE_CLIENT_ID && !isMock) {
       if (!token) {
-        return res.status(400).json({ error: 'Google access token is required' });
+        return res.status(400).json({ error: 'Google credential token is required' });
       }
 
-      // Verify Google Access Token using Google's userinfo endpoint
-      const verifyUrl = 'https://www.googleapis.com/oauth2/v3/userinfo';
-      const verifyRes = await fetch(verifyUrl, {
-        headers: { Authorization: `Bearer ${token}` }
+      // Verify Google ID Token securely using the official library
+      const ticket = await googleClient.verifyIdToken({
+        idToken: token,
+        audience: GOOGLE_CLIENT_ID,
       });
-      const payload = await verifyRes.json();
+      const payload = ticket.getPayload();
 
-      if (!verifyRes.ok) {
-        return res.status(400).json({ error: 'Failed to verify Google authentication access token' });
+      if (!payload) {
+        return res.status(400).json({ error: 'Failed to verify Google authentication ID token' });
       }
 
       userEmail = payload.email;
