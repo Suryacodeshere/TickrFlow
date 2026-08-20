@@ -21,7 +21,7 @@ export default function LoginPage() {
   const [customGoogleName, setCustomGoogleName] = useState('');
   const [showCustomGoogleInput, setShowCustomGoogleInput] = useState(false);
 
-  const { login, signup, user, loading } = useAuth();
+  const { login, signup, loginWithData, user, loading } = useAuth();
   const router = useRouter();
 
   const handleGoogleLogin = async (googleEmail: string, googleName: string, googleToken = 'mock_token', isMock = true) => {
@@ -38,14 +38,8 @@ export default function LoginPage() {
       if (!response.ok) {
         throw new Error(data.error || 'Google Sign-In failed');
       }
-      localStorage.setItem('tf_token', data.token);
-      localStorage.setItem('tf_user', JSON.stringify(data.user));
-      // Navigate based on role without reload to avoid race condition
-      if (data.user.role === 'ORGANIZER') {
-        router.push('/dashboard');
-      } else {
-        router.push('/');
-      }
+      // Use loginWithData to update React state AND localStorage at once
+      loginWithData(data.token, data.user);
     } catch (err: any) {
       console.error('Google login error:', err);
       setError(err.message || 'Google Login failed. Please try again.');

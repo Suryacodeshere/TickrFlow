@@ -15,6 +15,7 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithData: (token: string, user: User) => void;
   signup: (name: string, email: string, password: string, role: string) => Promise<void>;
   logout: () => void;
   getAuthHeaders: () => Record<string, string>;
@@ -25,6 +26,7 @@ const AuthContext = createContext<AuthContextType>({
   token: null,
   loading: true,
   login: async () => {},
+  loginWithData: () => {},
   signup: async () => {},
   logout: () => {},
   getAuthHeaders: () => ({}),
@@ -107,6 +109,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const loginWithData = (jwtToken: string, userData: User) => {
+    localStorage.setItem('tf_token', jwtToken);
+    localStorage.setItem('tf_user', JSON.stringify(userData));
+    setToken(jwtToken);
+    setUser(userData);
+    if (userData.role === 'ORGANIZER') {
+      router.push('/dashboard');
+    } else {
+      router.push('/');
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('tf_token');
     localStorage.removeItem('tf_user');
@@ -124,7 +138,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, signup, logout, getAuthHeaders }}>
+    <AuthContext.Provider value={{ user, token, loading, login, loginWithData, signup, logout, getAuthHeaders }}>
       {children}
     </AuthContext.Provider>
   );
