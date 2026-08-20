@@ -14,25 +14,36 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// Allowed origins for CORS
+// Allowed origins for CORS - accepts stable URL, all preview deployments, and localhost
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:3000',
-].filter(Boolean);
+];
+
+// Also allow any Vercel preview deployments from this project
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (origin.startsWith('http://localhost')) return callback(null, true);
+    if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return callback(null, true);
+    if (origin.includes('suryas-projects-b65a9565.vercel.app')) return callback(null, true);
+    callback(new Error(`CORS: Origin ${origin} not allowed`));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+};
 
 // Initialize Socket.IO
 const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ['GET', 'POST']
-  }
+  cors: corsOptions
 });
 
 // Store io instance on app to make it accessible in controllers
 app.set('socketio', io);
 
 // Global Middlewares
-app.use(cors({ origin: allowedOrigins }));
+app.use(cors(corsOptions));
 
 // IMPORTANT: Razorpay webhook requires the raw body to verify signature.
 // We must place this route BEFORE applying express.json() globally.
