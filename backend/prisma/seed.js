@@ -30,7 +30,7 @@ async function main() {
 
   const attendee = await prisma.user.create({
     data: {
-      name: 'Surya (Attendee)',
+      name: 'Guest',
       email: 'attendee@tickrflow.com',
       password: hashedPassword,
       role: 'ATTENDEE'

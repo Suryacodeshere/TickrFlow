@@ -150,6 +150,13 @@ export async function googleLogin(req, res) {
         }
       });
       console.log(`👤 Registered new Google user: ${userEmail}`);
+    } else if (userName && user.name !== userName) {
+      // Always sync the real name from Google on every login
+      user = await prisma.user.update({
+        where: { email: userEmail },
+        data: { name: userName }
+      });
+      console.log(`✏️ Updated Google user name: ${userEmail} → ${userName}`);
     }
 
     // Generate JWT token
