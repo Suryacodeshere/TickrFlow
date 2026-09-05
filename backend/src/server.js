@@ -58,6 +58,21 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date() });
 });
 
+// Redis Keep-Alive Check (For Upstash & Cron jobs)
+app.get('/api/keep-alive', async (req, res) => {
+  try {
+    const { redisClient } = await import('./config/redis.js');
+    if (redisClient.isReady) {
+      await redisClient.ping();
+      res.json({ status: 'alive', message: 'Redis pinged successfully' });
+    } else {
+      res.status(500).json({ status: 'error', message: 'Redis not ready' });
+    }
+  } catch (err) {
+    res.status(500).json({ status: 'error', message: err.message });
+  }
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
