@@ -1,6 +1,6 @@
 # TickrFlow 🎫
 
-🔗 **Live Demo:** [TickrFlow](https://frontend-suryas-projects-b65a9565.vercel.app)  
+🔗 **Live Demo:** [TickrFlow](https://tickr-flow-nu.vercel.app)  
 
 ---
 
