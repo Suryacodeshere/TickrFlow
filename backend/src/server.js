@@ -3,6 +3,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { rateLimit } from 'express-rate-limit';
 
 import authRoutes from './routes/authRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
@@ -44,6 +45,18 @@ app.set('socketio', io);
 
 // Global Middlewares
 app.use(cors(corsOptions));
+
+// Rate Limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // Limit each IP to 200 requests per window
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  message: { error: 'Too many requests from this IP, please try again after 15 minutes' },
+});
+
+// Apply the rate limiting middleware to API calls
+app.use('/api', apiLimiter);
 
 // IMPORTANT: Razorpay webhook requires the raw body to verify signature.
 // We must place this route BEFORE applying express.json() globally.
