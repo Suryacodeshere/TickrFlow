@@ -27,7 +27,7 @@ const corsOptions = {
     if (!origin) return callback(null, true);
     if (origin.startsWith('http://localhost')) return callback(null, true);
     if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return callback(null, true);
-    if (origin.includes('suryas-projects-b65a9565.vercel.app')) return callback(null, true);
+    if (origin.includes('tickr-flow') && origin.endsWith('.vercel.app')) return callback(null, true);
     callback(new Error(`CORS: Origin ${origin} not allowed`));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
