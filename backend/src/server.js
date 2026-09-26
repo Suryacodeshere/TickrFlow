@@ -13,6 +13,7 @@ import { connectRedis } from './config/redis.js';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1); // Trust Render's reverse proxy to get real user IPs
 const server = http.createServer(app);
 
 // Allowed origins for CORS - accepts stable URL, all preview deployments, and localhost
